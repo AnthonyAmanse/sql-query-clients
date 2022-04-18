@@ -99,6 +99,7 @@ dependencies:
     - backoff
     - cachetools
     - certifi
+    - deprecated
     - docutils
     - gast
     - gevent
