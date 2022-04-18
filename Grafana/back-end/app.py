@@ -132,7 +132,7 @@ from threading import Thread
 from joblib import Memory
 
 
-sys.path.insert(0, "../../Python/")
+sys.path.insert(0, "./Python/")
 try:
     from cloud_utilities.sql_query import SQLClient
     from cloud_utilities.sql_magic import format_sql
@@ -148,6 +148,7 @@ from ibmcloudsql.exceptions import (
     RateLimitedException,
 )
 
+from opsscale_filter import range_to_timefilter
 
 logger = logging.getLogger()
 # since Python 3.3
@@ -1583,16 +1584,9 @@ def process_query(fullquery, body, sqlClient=None, old_key=None):
                 # process for regular data
                 type_of_column = appname
                 if "string" == type_of_column:
-                    # the type is string
-                    # if {time_col} is in timestamp
-                    substr += """ to_timestamp({time_col}) BETWEEN to_timestamp("{dt_from}") and to_timestamp("{dt_to}")""".format(
-                        time_col=time_col, dt_from=sdt_from, dt_to=sdt_to
-                    )
+                    substr += "(" + range_to_timefilter(sdt_from, sdt_to) + ")"
                 else:
-                    # flake8: noqa = E501
-                    substr += """ cast({time_col}/1000 as long) BETWEEN to_unix_timestamp(to_timestamp("{dt_from}")) and to_unix_timestamp(to_timestamp("{dt_to}"))""".format(
-                        time_col=time_col, dt_from=sdt_from, dt_to=sdt_to
-                    )  # noqa = E501
+                    substr += "(" + range_to_timefilter(sdt_from, sdt_to) + ")"
 
                 sql_stmt = p_timeFilter.sub(substr, sql_stmt, count=1)
     sql_stmt = process_macro_data_source(
